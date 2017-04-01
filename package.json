@@ -1,0 +1,10 @@
+{
+  "name": "InStory",
+  "description": "tool for tracking inspiraiton history",
+  "standard": {
+    "globals": [
+      "chrome",
+      "fetch"
+    ]
+  }
+}

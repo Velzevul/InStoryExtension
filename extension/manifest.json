@@ -8,12 +8,19 @@
     ]
   },
   "browser_action": {
-    "default_title": "Inspiration Seeking Study"
+    "default_icon": {
+      "32": "icon-disabled.png"
+    },
+    "default_title": "History of inspiration"
   },
   "permissions": [
+    "storage",
     "tabs",
     "http://*/*",
     "https://*/*"
   ],
+  "externally_connectable": {
+    "matches": ["*://localhost.com/*", "*://vdziubak.com/*"]
+  },
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }
