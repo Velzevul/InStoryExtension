@@ -103,6 +103,7 @@ const recordImage = (image, query) => {
     .then(json => {
       if (json.success) {
         console.log('recorded image interaction', image, 'query', query)
+        log(`${query.q}: inspected image ${image.url}`)
       } else {
         console.log('error')
       }
@@ -124,6 +125,7 @@ const searchForImages = (query) => {
     .then(json => {
       if (json.success) {
         console.log(`success: searching for ${JSON.stringify(query)}`)
+        log(`new query: ${query.q}`)
       } else {
         console.log('error')
       }
