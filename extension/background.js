@@ -6,7 +6,7 @@ const googleEncryptedRegexp = /^https:\/\/encrypted-tbn[0123]\.gstatic\.com/
 const base64Regexp = /^data:image.*/
 const imageRegexp = /.*\.(?:jpe?g|png|gif|svg)$/
 
-const SERVER_URL = 'https://localhost.com/server'
+const SERVER_URL = 'https://vdziubak.com/instoryServer'
 
 var iconBlinkInterval
 var iconBlink = true
@@ -178,25 +178,29 @@ chrome.tabs.onCreated.addListener(tab => {
 })
 
 chrome.browserAction.onClicked.addListener(tab => {
-  recording = !recording
+  if (userId) {  
+    recording = !recording
 
-  if (recording) {
-    chrome.browserAction.setTitle({title: `Recording activity for ${userId}`})
-    chrome.browserAction.setIcon({path: './icon-recording.png'})
+    if (recording) {
+      chrome.browserAction.setTitle({title: `Recording activity for ${userId}`})
+      chrome.browserAction.setIcon({path: './icon-recording.png'})
 
-    iconBlinkInterval = setInterval(() => {
-      if (iconBlink) {
-        chrome.browserAction.setIcon({path: './icon-recording-pause.png'})
-        iconBlink = false
-      } else {
-        chrome.browserAction.setIcon({path: './icon-recording.png'})
-        iconBlink = true
-      }
-    }, 1000)
+      iconBlinkInterval = setInterval(() => {
+        if (iconBlink) {
+          chrome.browserAction.setIcon({path: './icon-recording-pause.png'})
+          iconBlink = false
+        } else {
+          chrome.browserAction.setIcon({path: './icon-recording.png'})
+          iconBlink = true
+        }
+      }, 1000)
+    } else {
+      clearTimeout(iconBlinkInterval)
+      chrome.browserAction.setIcon({path: './icon.png'})
+      chrome.browserAction.setTitle({title: `Logged in as ${userId}`})
+    }
   } else {
-    clearTimeout(iconBlinkInterval)
-    chrome.browserAction.setIcon({path: './icon.png'})
-    chrome.browserAction.setTitle({title: `Logged in as ${userId}`})
+    chrome.tabs.create({url: 'https://vdziubak.com/instory'})
   }
 })
 
