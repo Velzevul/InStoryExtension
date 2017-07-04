@@ -10,28 +10,42 @@ const SERVER_URL = 'https://vdziubak.com/instoryServer'
 
 var iconBlinkInterval
 var iconBlink = true
-var recording = true
+var recording = false
 var userId = null
+
+const updateBrowserAction = () => {
+  if (userId) {
+    if (recording) {
+      chrome.browserAction.setTitle({title: `Recording activity for ${userId}`})
+      chrome.browserAction.setIcon({path: './icon-recording.png'})
+
+      iconBlinkInterval = setInterval(() => {
+        if (iconBlink) {
+          chrome.browserAction.setIcon({path: './icon-recording-pause.png'})
+          iconBlink = false
+        } else {
+          chrome.browserAction.setIcon({path: './icon-recording.png'})
+          iconBlink = true
+        }
+      }, 1000)
+    } else {
+      clearTimeout(iconBlinkInterval)
+      chrome.browserAction.setIcon({path: './icon.png'})
+      chrome.browserAction.setTitle({title: `Logged in as ${userId}`})
+    }
+  } else {
+    chrome.browserAction.setIcon({path: './icon-disabled.png'})
+    chrome.browserAction.setTitle({title: 'You are not logged in'})
+  }
+}
+
+updateBrowserAction();
+
 chrome.storage.local.get('INSTORY_USER_ID', ({'INSTORY_USER_ID': id}) => {
   if (id) {
     userId = id
     console.log(`logged in as ${userId}`)
-    chrome.browserAction.setTitle({title: `Recording activity for ${userId}`})
-    chrome.browserAction.setIcon({path: './icon-recording.png'})
-
-    iconBlinkInterval = setInterval(() => {
-      if (iconBlink) {
-        chrome.browserAction.setIcon({path: './icon-recording.png'})
-        iconBlink = false
-      } else {
-        chrome.browserAction.setIcon({path: './icon-recording-pause.png'})
-        iconBlink = true
-      }
-    }, 1000)
-  } else {
-    console.log('not logged in')
-    chrome.browserAction.setIcon({path: './icon-disabled.png'})
-    chrome.browserAction.setTitle({title: 'You are not logged in'})
+    updateBrowserAction();
   }
 })
 
@@ -153,21 +167,20 @@ const injectExtensionId = (tabId) => {
 }
 
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
-  console.log(msg)
   if (msg.event === 'getInStoryUser') {
-    sendResponse({userId})
+    console.log('somebody asked user id');
+    sendResponse({userId});
   } else if (msg.event === 'setInStoryUser') {
-    userId = msg.userId
-    chrome.storage.local.set({INSTORY_USER_ID: msg.userId})
-    chrome.browserAction.setIcon({path: './icon.png'})
-    chrome.browserAction.setTitle({title: `Logged in as ${userId}`})
-    sendResponse({userId})
+    console.log('setting user id');
+    userId = msg.userId;
+    updateBrowserAction();
+    sendResponse({userId});
   }
 })
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.event === 'recordImage') {
-    recordImage(msg.image, msg.query)
+    recordImage(msg.image, msg.query);
   }
 })
 
@@ -178,29 +191,11 @@ chrome.tabs.onCreated.addListener(tab => {
 })
 
 chrome.browserAction.onClicked.addListener(tab => {
-  if (userId) {  
-    recording = !recording
-
-    if (recording) {
-      chrome.browserAction.setTitle({title: `Recording activity for ${userId}`})
-      chrome.browserAction.setIcon({path: './icon-recording.png'})
-
-      iconBlinkInterval = setInterval(() => {
-        if (iconBlink) {
-          chrome.browserAction.setIcon({path: './icon-recording-pause.png'})
-          iconBlink = false
-        } else {
-          chrome.browserAction.setIcon({path: './icon-recording.png'})
-          iconBlink = true
-        }
-      }, 1000)
-    } else {
-      clearTimeout(iconBlinkInterval)
-      chrome.browserAction.setIcon({path: './icon.png'})
-      chrome.browserAction.setTitle({title: `Logged in as ${userId}`})
-    }
+  if (userId) {
+    recording = !recording;
+    updateBrowserAction();
   } else {
-    chrome.tabs.create({url: 'https://vdziubak.com/instory'})
+    chrome.tabs.create({url: 'https://vdziubak.com/instory'});
   }
 })
 
@@ -208,15 +203,27 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
     injectExtensionId(tabId)
 
-    console.log('here')
-
     if (recording) {
-      console.log('recording')
       if (googleEncryptedRegexp.test(tab.url) || base64Regexp.test(tab.url) || imageRegexp.test(tab.url)) {
-        recordImage({
-          src: tab.url,
-          url: tab.url
-        }, JSON.stringify(tabQueries[tab.id]))
+        chrome.tabs.executeScript(tabId, {
+          code: `(
+            function(){
+              var targetImg = document.querySelector('img')
+
+              chrome.runtime.sendMessage({
+                event: 'recordImage',
+                image: {
+                  src: targetImg.src,
+                  height: targetImg.naturalHeight,
+                  width: targetImg.naturalWidth,
+                  thumbSrc: targetImg.src,
+                  url: document.URL
+                },
+                query: ${JSON.stringify(tabQueries[tab.id])}
+              })
+            }
+          )()`
+        })
       } else if (googleImageRegexp.test(tab.url) || googleImagesRegexp.test(tab.url)) {
         const [oldSearchParams, newSearchParams] = parseSearchParams(tab.url)
         const combinedSearchParams = Object.assign({}, oldSearchParams, newSearchParams)
@@ -251,8 +258,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                       var targetImgThumb = targetDivs[1].querySelector('img.irc_rii')
 
                       if (targetImg && targetImg.src && targetImg.naturalHeight) {
-                        console.log(targetDivs)
-
                         clearTimeout(window.inStoryInterval)
                         chrome.runtime.sendMessage({
                           event: 'recordImage',
@@ -265,7 +270,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                           },
                           query: ${JSON.stringify(tabQueries[tab.id])}
                         })
+                      } else {
+                        console.log('image not loaded yet', targetImg.src, tagetImg.naturalHeight);
                       }
+                    } else {
+                      console.log('targetDivs length not 2', targetDivs);
                     }
                   }, 100)
                 }
