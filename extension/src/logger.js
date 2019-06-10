@@ -18,7 +18,7 @@ var Logger = (function() {
       serverLog: function(msg) {
         fetch(`${SERVER_URL}/log/${userId}/`, {
           method: 'POST',
-          mode: 'CORS',
+          mode: "cors",
           headers: {
             'Content-Type': 'application/json'
           },

@@ -52,7 +52,7 @@ chrome.storage.local.get('INSTORY_USER_ID', ({'INSTORY_USER_ID': id}) => {
 const log = (message) => {
   fetch(`${SERVER_URL}/log/${userId}/`, {
     method: 'POST',
-    mode: 'CORS',
+    mode: "cors",
     headers: {
       'Content-Type': 'application/json'
     },
@@ -104,7 +104,7 @@ const compareQueries = (q1, q2) => {
 const recordImage = (image, query) => {
   fetch(`${SERVER_URL}/histories/${userId}/images`, {
     method: 'POST',
-    mode: 'CORS',
+    mode: "cors",
     headers: {
       'Content-Type': 'application/json'
     },
@@ -127,7 +127,7 @@ const recordImage = (image, query) => {
 const searchForImages = (query) => {
   fetch(`${SERVER_URL}/histories/${userId}/queries`, {
     method: 'POST',
-    mode: 'CORS',
+    mode: "cors",
     headers: {
       'Content-Type': 'application/json'
     },
@@ -253,9 +253,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                   window.inStoryInterval = setInterval(function() {
                     var targetDivs = document.querySelectorAll('div[data-item-id="${inspectedImageCode}"]')
 
-                    if (targetDivs.length === 2) {
+                    if (targetDivs.length >= 2) {
                       var targetImg = targetDivs[0].querySelector('img.irc_mi')
-                      var targetImgThumb = targetDivs[1].querySelector('img.irc_rii')
+                      var targetImgThumb = targetDivs[targetDivs.length - 1].querySelector('img.irc_rii')
 
                       if (targetImg && targetImg.src && targetImg.naturalHeight) {
                         clearTimeout(window.inStoryInterval)
@@ -271,10 +271,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                           query: ${JSON.stringify(tabQueries[tab.id])}
                         })
                       } else {
-                        console.log('image not loaded yet', targetImg.src, tagetImg.naturalHeight);
+                        console.log('image not loaded yet');
                       }
                     } else {
-                      console.log('targetDivs length not 2', targetDivs);
+                      console.log('targetDivs length < 2', targetDivs);
                     }
                   }, 100)
                 }

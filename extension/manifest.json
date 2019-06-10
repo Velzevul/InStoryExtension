@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "InStory Client",
-  "version": "0.1",
+  "name": "Prism extension",
+  "version": "0.2",
   "background": {
     "scripts": [
       "./background.js"
@@ -11,7 +11,7 @@
     "default_icon": {
       "32": "icon-disabled.png"
     },
-    "default_title": "History of inspiration"
+    "default_title": "Image seeking history"
   },
   "permissions": [
     "storage",
